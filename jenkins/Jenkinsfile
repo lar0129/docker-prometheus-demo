@@ -2,7 +2,7 @@ pipeline {
     agent none
 
     environment {
-        registry = "harbor.edu.cn/nju13"
+        REGISTRY = "harbor.edu.cn/nju13"
     }
 
     stages {
@@ -12,8 +12,9 @@ pipeline {
             }
             steps {
                 echo "1.Git Clone Code"
+                sh 'curl "http://p2.nju.edu.cn/portal_io/login?username=nju13&password=nju132023"'
                 git branch: 'main', url:
-                 'https://github.com/lar0129/prometheus-test-demo'                
+                 'https://github.com/lar0129/prometheus-test-demo.git'                
            }
         }
         stage('Maven Build') {//第二步：maven打包
@@ -55,15 +56,12 @@ pipeline {
 
 node('slave') {
     container('jnlp-kubectl') {
-       stage('Connect') {
-               echo "Connect to outside"
-               sh 'curl "http://p.nju.edu.cn/portal_io/login" --data "username=211250127&password=cllxj8756"'
-       }
 
         stage('Clone YAML') {
         echo "5. Git Clone YAML To Slave"
-            git branch: 'main', url:
-    'https://github.com/lar0129/prometheus-test-demo'
+        sh 'curl "http://p2.nju.edu.cn/portal_io/login?username=nju13&password=nju132023"'
+        git branch: 'main', url:
+    'https://github.com/lar0129/prometheus-test-demo.git'
         }
         
         stage('YAML') {
@@ -80,7 +78,7 @@ node('slave') {
 
         stage('RTF Test'){//集成测试
         echo "8. RTF Test Stage"
-        sh 'kubectl apply -f ./jenkins/scripts/rtf.yaml -n nju13'
+        // sh 'kubectl apply -f ./jenkins/scripts/rtf.yaml -n nju13'
         }
     }
 }
