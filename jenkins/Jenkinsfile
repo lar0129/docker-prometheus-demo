@@ -34,9 +34,9 @@ pipeline {
             }
             steps {
             echo "3.Image Build Stage"
-            sh 'docker build -f Dockerfile --build-arg jar_name=target/demo-0.0.1-SNAPSHOT.jar -t demo:${BUILD_ID} . '
+            sh 'docker build -f Dockerfile --build-arg jar_name=target/demo-0.0.1-SNAPSHOT.jar -t lar-demo:${BUILD_ID} . '
             // library使用宏定义，可以在全局设置中设置
-            sh 'docker tag  demo:${BUILD_ID}  ${REGISTRY}/demo:${BUILD_ID}'
+            sh 'docker tag  lar-demo:${BUILD_ID}  ${REGISTRY}/lar-demo:${BUILD_ID}'
             }
         }
         stage('Push') {
@@ -46,7 +46,7 @@ pipeline {
             steps {
             echo "4.Push Docker Image Stage"
             sh "docker login --username=nju13 harbor.edu.cn -p nju132023"
-            sh "docker push ${REGISTRY}/demo:${BUILD_ID}"
+            sh "docker push ${REGISTRY}/lar-demo:${BUILD_ID}"
             }
         }
     }

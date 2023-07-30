@@ -22,7 +22,7 @@ spec:
         app: demo
     spec:
       containers: #docker容器的配置
-      - image: harbor.edu.cn/nju13/demo:{VERSION} #pull镜像的地址,本地测试时注销
+      - image: harbor.edu.cn/nju13/lar-demo:{VERSION} #pull镜像的地址,本地测试时注销
 #      - image: demo:latest  # win下本地测试用
         name: demo
 #        imagePullPolicy: IfNotPresent # 本地测试用
