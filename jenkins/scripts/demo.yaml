@@ -1,0 +1,48 @@
+# demo.yaml
+apiVersion: apps/v1
+kind: Deployment #对象类型
+metadata:
+  labels:
+    app: demo
+  name: demo
+  namespace: nju13
+spec:
+  replicas: 1 #运行容器的副本数
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      annotations:
+        prometheus.io/path: /actuator/prometheus
+        prometheus.io/port: "8080"
+        prometheus.io/scheme: http
+        prometheus.io/scrape: "true"
+      labels:
+        app: demo
+    spec:
+      containers: #docker容器的配置
+      - image: harbor.edu.cn/nju13/demo:{VERSION} #pull镜像的地址,本地测试时注销
+#      - image: demo:latest  # win下本地测试用
+        name: demo
+#        imagePullPolicy: IfNotPresent # 本地测试用
+      imagePullSecrets: # 本地测试时注销
+        - name: nju13 # 本地测试时注销
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo
+  namespace: nju13
+  labels:
+    app: demo
+spec:
+  type: NodePort
+  selector:
+    app: demo
+  ports:
+  - name: tcp
+    nodePort: 30333
+    protocol: TCP
+    port: 8080
+    targetPort: 8080
