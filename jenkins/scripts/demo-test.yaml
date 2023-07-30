@@ -1,0 +1,26 @@
+apiVersion: apps/vi
+kind: Deployment
+metadata:
+  name: demo-test
+  namespace: nju13
+  labels:
+    app: demo-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo-test
+  template:
+    metadata:
+      labels:
+        app: demo-test
+    spec:
+      containers:
+      - name: demo-test
+        image: python
+        command: ["/bin/sh"]
+        args: ["-c", 'curl "http://p.nju.edu.cn/portal_io/login" --data "username=201250215&password=lyx20020305" && 
+        curl https://raw.githubusercontent.com/lyxx2535/Cloud_Native_Project/master/jenkins/scripts/rtf.robot -o /tmp/rtf.robot && 
+        pip install requests && pip install robotframework && robot /tmp/rtf.robot']
+      imagePullSecrets:
+      - name: nju04
