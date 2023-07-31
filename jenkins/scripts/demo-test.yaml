@@ -1,26 +1,44 @@
 apiVersion: apps/vi
 kind: Deployment
 metadata:
-  name: demo-test
+  name: lar-demo-test
   namespace: nju13
   labels:
-    app: demo-test
+    app: lar-demo-test
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: demo-test
+      app: lar-demo-test
   template:
     metadata:
       labels:
-        app: demo-test
+        app: lar-demo-test
     spec:
       containers:
-      - name: demo-test
+      - name: lar-demo-test
         image: python
         command: ["/bin/sh"]
-        args: ["-c", 'curl "http://p.nju.edu.cn/portal_io/login" --data "username=201250215&password=lyx20020305" && 
+        args: ["-c", 'curl "http://p.nju.edu.cn/portal_io/login" --data "username=211250127&password=cllxj8756" && 
         curl https://raw.githubusercontent.com/lyxx2535/Cloud_Native_Project/master/jenkins/scripts/rtf.robot -o /tmp/rtf.robot && 
         pip install requests && pip install robotframework && robot /tmp/rtf.robot']
       imagePullSecrets:
-      - name: nju04
+      - name: docker-harbor-nju13
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: lar-demo-test
+  name: lar-demo-test
+  namespace: nju13
+spec:
+  ports:
+    - name: tcp
+      port: 80
+      protocol: TCP
+      targetPort: 80
+      nodePort: 30334
+  selector:
+    app: rtf
+  type: NodePort
