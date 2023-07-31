@@ -75,7 +75,12 @@
     * Jenkinsfile：
     * ![image-20230729201653341](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230729201653341.png)
     * ![image-20230730224910852](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230730224910852.png)
+  
   * 3. 访问端口验证k8s部署是否成功
+  
+  * 集群网址172.29.4.18，Nodeport配置为30333，故访问172.29.4.18:30333/ping，验证成功
+  
+    * ![image-20230731185135102](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230731185135102.png)
 
 6. 代码提交到仓库自动触发流水线（bonus 5分）
 

@@ -42,7 +42,7 @@ spec:
     app: lar-demo
   ports:
   - name: tcp
-    nodePort: 30333
+    nodePort: 30332
     protocol: TCP
     port: 8080
     targetPort: 8080
