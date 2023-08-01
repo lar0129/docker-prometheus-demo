@@ -4,9 +4,12 @@
 
 开发一个 Spring Boot 应用，并使用云原生功能
 
-* github项目地址：https://github.com/lar0129/prometheus-test-demo
 * gitee项目地址：https://gitee.com/lar0129/prometheus-test-demo
-  * Jenkins拉取github仓库经常失败，故gitee为备用
+
+* github项目地址：https://github.com/lar0129/prometheus-test-demo
+  * Jenkins拉取github仓库经常失败，故gitee为主项目，github为备份
+
+
 
 
 ## **1. 功能要求**
@@ -157,10 +160,11 @@
               }
               steps {
                   echo "1.Git Clone Code"
-                  sh 'curl "http://p2.nju.edu.cn/portal_io/login?username=nju13&password=nju132023"'
+                  sh 'curl "http://p2.nju.edu.cn/portal_io/login?username=211250127&password=cllxj8756"'
                   git branch: 'main', url:
-                   'https://github.com/lar0129/prometheus-test-demo.git'                
-             }
+  //                 'https://github.com/lar0129/prometheus-test-demo.git'
+                  "https://gitee.com/lar0129/prometheus-test-demo.git"
+              }
           }
           stage('Maven Build') {//第二步：maven打包
               agent {
@@ -204,9 +208,10 @@
   
           stage('Clone YAML') {
           echo "5. Git Clone YAML To Slave"
-          sh 'curl "http://p2.nju.edu.cn/portal_io/login?username=nju13&password=nju132023"'
+          sh 'curl "http://p2.nju.edu.cn/portal_io/login?username=211250127&password=cllxj8756"'
           git branch: 'main', url:
-      'https://github.com/lar0129/prometheus-test-demo.git'
+  //    'https://github.com/lar0129/prometheus-test-demo.git'
+          "https://gitee.com/lar0129/prometheus-test-demo.git"
           }
           
           stage('YAML') {
@@ -221,15 +226,21 @@
           // sh 'kubectl apply -f ./jenkins/scripts/demo-monitor.yaml'
           }
   
+          stage('Monitor') {
+              echo "8. Deploy Prometheus Monitor"
+               sh 'kubectl apply -f ./jenkins/scripts/demo-monitor.yaml'
+          }
+  
           stage('RTF Test'){//集成测试
-          echo "8. RTF Test Stage"
+          echo "9. RTF Test Stage"
           // sh 'kubectl apply -f ./jenkins/scripts/rtf.yaml -n nju13'
           }
       }
   }
   
+  
   ```
-
+  
 * 具体过程：
 
   * 1.将jenkins连接到k8s-nju13-namespace中，完成鉴权
@@ -241,10 +252,25 @@
       ![image-20230730182453951](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230730182453951.png)
 
   * 2.部署流水线
+    
     * Jenkins流程：
-    * ![image-20230729201653341](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230729201653341.png)
+    
+    * |          |         Stage          |         step         |
+      | :------: | :--------------------: | :------------------: |
+      | 持续集成 |    1.Git Clone Code    | 拉取spring boot代码  |
+      |          |     2.Maven Build      |    maven构建jar包    |
+      |          |     3.Image Build      |       构建镜像       |
+      |          | 4.Push Image To Harbor | push镜像至docker仓库 |
+      | 持续部署 |    5.Git Clone Yaml    | 拉取部署所需yaml文件 |
+      |          |   6.Change YAML File   |   改变Yaml环境变量   |
+      |          |  7.Deploy the Web App  | 部署spring boot应用  |
+      |          |  8.Deploy the Monitor  |  部署Prometheus监控  |
+      | 集成测试 |         9.Test         |         测试         |
+    
+    * 部署成功截图
+    
     * ![image-20230730224910852](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230730224910852.png)
-  
+    
   * 3.访问端口验证k8s部署是否成功
   
     * 集群网址172.29.4.18，Nodeport配置为30333，故访问172.29.4.18:30333/ping，验证成功
@@ -256,15 +282,79 @@
 
 ## **3. 扩容场景**
 
-1. 为该 Java 项目提供 Prometheus metrics 接口，可以供 Prometheus 采集监控指标
+1.为该 Java 项目提供 Prometheus metrics 接口，可以供 Prometheus 采集监控指标
 
-2. 在 Grafana 中的定制应用的监控大屏（CPU/内存/JVM）
+* 在springboot项目中配置Prometheus metrics 接口
 
-3. 使用压测工具（例如 Jmeter）对接口进压测，在 Grafana 中观察监控数据
+  * ![image-20230801112225930](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801112225930.png)
 
-4. 通过 Kubernetes 命令进行手工扩容，并再次观察 Grafana 中的监控数据
+* 部署k8s-monitor对象
 
-5. 加分项：使用 Kubernetes HPA 模块根据 CPU 负载做服务的 Auto Scale（bonus 5 分）
+  * yaml代码位于./jenkins/script/demo-monitor.yaml
+
+  * ```yaml
+    apiVersion: monitoring.coreos.com/v1
+    kind: ServiceMonitor
+    metadata:
+      labels:
+        k8s-app: lar-demo
+      name: lar-demo
+      namespace: monitoring
+    spec:
+      endpoints:
+      - interval: 30s
+        port: tcp
+        path: /actuator/prometheus
+        scheme: 'http'
+      selector:
+        matchLabels:
+          app: lar-demo
+      namespaceSelector:
+        matchNames:
+        - nju13
+    ```
+
+  * 放入流水线中部署
+
+  * ![image-20230801112409002](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801112409002.png)
+
+* 在Prometheus的UI界面验证部署是否成功
+
+  * ![image-20230801112050506](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801112050506.png)
+
+2.在 Grafana 中的定制应用的监控大屏（CPU/内存/JVM）
+
+* 网站系统的安全隐患：Grafana中默认的管理员账户admin密码admin没改，随随便便就能进去操作
+* 在Grafana 中的定制监控应用lar-demo的各种性能
+  * 容器CPU使用情况
+  * 容器内存使用情况
+  * 网络请求情况
+  * ![image-20230801150417996](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801150417996.png)
+
+3.使用压测工具（例如 Jmeter）对接口进压测，在 Grafana 中观察监控数据
+
+* 使用Jmeter，向172.29.4.18:30332/ping  用100个进程同时发送 100个GET请求
+* 配置和结果如下
+  * ![image-20230801150552940](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801150552940.png)
+  * ![image-20230801150604028](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801150604028.png)
+  * ![image-20230801150640926](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801150640926.png)
+    * 部分请求错误，证明限流成功
+* Grafana 监控应用lar-demo结果如下，明显可看出变化
+  * CPU使用情况
+    * ![image-20230801150824336](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801150824336.png)
+    * 从25升至50
+  * Memory使用情况
+    * ![image-20230801150928604](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801150928604.png)
+    * 从2.7G升至3G
+  * 网络使用情况
+    * ![image-20230801151009171](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801151009171.png)
+
+4.通过 Kubernetes 命令进行手工扩容，并再次观察 Grafana 中的监控数据
+
+* 命令行扩容发现权限不足，故只能更改yaml文件重新构建流水线
+* ![image-20230801152235388](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801152235388.png)
+
+5.加分项：使用 Kubernetes HPA 模块根据 CPU 负载做服务的 Auto Scale（bonus 5 分）
 
 # **分数说明**
 
@@ -276,7 +366,7 @@
 
 1.2 实现限流功能（10 分）√
 
-1.3 实现接口访问指标（QPS），并暴露给 Prometheus（5分）
+1.3 实现接口访问指标（QPS），并暴露给 Prometheus（5分）√
 
 1.3 **统一限流（bonus 5 分）**
 
@@ -299,11 +389,11 @@
 
 **3. 扩容场景（****15** **分）**
 
-3.1 Prometheus 采集监控指标（5 分）
+3.1 Prometheus 采集监控指标（5 分）√
 
-3.2 Grafana 定制应用监控大屏（5 分）
+3.2 Grafana 定制应用监控大屏（5 分）√
 
-3.3 压测并观察监控数据（5 分） 
+3.3 压测并观察监控数据（5 分） √
 
 **3.5 Auto Scale（bonus 10 分）**
 
