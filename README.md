@@ -352,9 +352,14 @@
 4.通过 Kubernetes 命令进行手工扩容，并再次观察 Grafana 中的监控数据
 
 * 命令行扩容发现权限不足，故只能更改yaml文件重新构建流水线
-* ![image-20230801152235388](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801152235388.png)
+  * ![image-20230801152235388](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801152235388.png)
+  * ![image-20230801152328292](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801152328292.png)
+* 扩容后观察Grafana可见，Cpu和Memory的监控面板新增两个Container的曲线
+  * ![image-20230801152753480](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801152753480.png)
 
 5.加分项：使用 Kubernetes HPA 模块根据 CPU 负载做服务的 Auto Scale（bonus 5 分）
+
+* 没学
 
 # **分数说明**
 
