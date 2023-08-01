@@ -76,8 +76,13 @@ node('slave') {
         // sh 'kubectl apply -f ./jenkins/scripts/demo-monitor.yaml'
         }
 
+        stage('Monitor') {
+            echo "8. Deploy Prometheus Monitor"
+             sh 'kubectl apply -f ./jenkins/scripts/demo-monitor.yaml'
+        }
+
         stage('RTF Test'){//集成测试
-        echo "8. RTF Test Stage"
+        echo "9. RTF Test Stage"
         // sh 'kubectl apply -f ./jenkins/scripts/rtf.yaml -n nju13'
         }
     }
