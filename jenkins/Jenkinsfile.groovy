@@ -12,7 +12,6 @@ pipeline {
             }
             steps {
                 echo "1.Git Clone Code"
-                sh 'curl "http://p2.nju.edu.cn/portal_io/login?username=211250127&password=cllxj8756"'
                 git branch: 'main', url:
 //                 'https://github.com/lar0129/prometheus-test-demo.git'
                 "https://gitee.com/lar0129/prometheus-test-demo.git"
@@ -60,7 +59,6 @@ node('slave') {
 
         stage('Clone YAML') {
         echo "5. Git Clone YAML To Slave"
-        sh 'curl "http://p2.nju.edu.cn/portal_io/login?username=211250127&password=cllxj8756"'
         git branch: 'main', url:
 //    'https://github.com/lar0129/prometheus-test-demo.git'
         "https://gitee.com/lar0129/prometheus-test-demo.git"
