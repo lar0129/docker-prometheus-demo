@@ -16,7 +16,7 @@ spec:
         app: lar-demo
     spec:
       containers:
-        - name: demo-hpa
+        - name: lar-demo
           image: harbor.edu.cn/nju13/lar-demo:65
           imagePullPolicy: IfNotPresent
 
