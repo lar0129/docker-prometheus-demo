@@ -17,9 +17,7 @@ spec:
     spec:
       containers:
         - name: lar-demo
-          image: harbor.edu.cn/nju13/lar-demo:{VERSION}
-          imagePullPolicy: IfNotPresent
-
+          image: harbor.edu.cn/nju13/lar-demo:70
           ports:
             - containerPort: 8080
           resources: #基于内存自动扩容
@@ -39,7 +37,6 @@ metadata:
 spec:
   ports:
     - port: 8080
-  #     nodePort: 31007
       protocol: TCP
   selector:
     app: lar-demo
