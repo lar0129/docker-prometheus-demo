@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: demo-hpa
-          image: harbor.edu.cn/nju13/demo-hpa:{VERSION}
+          image: harbor.edu.cn/nju13/lar-demo:{VERSION}
 #          imagePullPolicy: IfNotPresent
 
           ports:
