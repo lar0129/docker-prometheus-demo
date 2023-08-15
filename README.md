@@ -1,38 +1,43 @@
 [TOC]
 
+# 项目简介
+
 开发一个 Spring Boot 应用，并使用云原生功能
 
 * gitee项目地址：https://gitee.com/lar0129/prometheus-test-demo
 * github项目地址：https://github.com/lar0129/prometheus-test-demo
   * Jenkins拉取github仓库经常失败，故gitee为主项目，github为备份
+* 统一限流项目地址：https://gitee.com/liu-yaoli165/prometheus-test-demo.git
 
 
 
-小组成员
+# 小组成员
 
 * 211250165 刘尧力
 * 211250127 梁安然
 * 211250135 赵简
 
-# 过程截图
 
+
+# 过程截图
 
 ## **1. 功能要求**
 
-​        
+### 1.1 实现接口（5分）
 
-1. 实现一个 REST 接口（简单接口即可，比如 json 串 {"msg":"hello"}）
+实现一个 REST 接口（简单接口即可，比如 json 串 {"msg":"hello"}）
 
 * 目前提供/ping接口与限流功能
 * 放到github上方便进行持续集成/持续部署
 
 ![image-20230729200322667](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230729200322667.png)
 
-​          
+### 1.2 实现限流功能  （10分）      
 
-2. 接口提供限流功能，当请求达到每秒 100 次的时候，返回 429（Too many requests）
+接口提供限流功能，当请求达到每秒 100 次的时候，返回 429（Too many requests）
 
 * 代码：
+  
   * ```java
     private final RateLimiter rateLimiter = RateLimiter.create(100.0);
     
@@ -46,6 +51,8 @@
         }
     ```
   
+  
+  
 * 使用Jmeter进行并发测试，结果显示限流成功
 
 ![image-20230729200404047](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230729200404047.png)
@@ -56,19 +63,136 @@
 
 
 
-3. **加分项**：当后端服务有多个实例的时候（一个 Service 包含若干个 Pod），如何实现**统一限流**（bonus 5分）
+### 1.3 统一限流（bonus 5分）
 
- * 仿照第二次作业，使用Eureka转发实现统一限流？（待做）
+**加分项**：当后端服务有多个实例的时候（一个 Service 包含若干个 Pod），如何实现**统一限流**（bonus 5分）
 
 
 
-## **2. DevOps 要求**
+ * 引入eureka注册中心，使用consumer统一访问service服务
 
-1. 为该项目准备 Dockerfile，用于构建镜像
+   目录结构：
+
+   ![](https://files.lsmcloud.top/blogScreen Shot 2023-08-14 at 10.38.34 AM.png)
+
+
+
+- 配置consumer
+
+   ```java
+   package demo.feign;
+   
+   import org.springframework.cloud.openfeign.FeignClient;
+   import org.springframework.web.bind.annotation.GetMapping;
+   import com.netflix.loadbalancer.RoundRobinRule;
+   
+   @FeignClient(name = "hello-service", configuration = RoundRobinRule.class)
+   public interface FeignService
+   {
+       @GetMapping("/ping")
+       String msg();
+   }
+   
+   ```
+
+   ```java
+   package demo;
+   
+   import org.springframework.boot.SpringApplication;
+   import org.springframework.boot.autoconfigure.SpringBootApplication;
+   import org.springframework.cloud.openfeign.EnableFeignClients;
+   
+   
+   @SpringBootApplication
+   @EnableFeignClients
+   public class DemoApplication {
+   
+   	public static void main(String[] args) {
+   		SpringApplication.run(DemoApplication.class, args);
+   	}
+   
+   }
+   ```
+
+   ```java
+   package demo.controller;
+   
+   
+   import com.google.common.util.concurrent.RateLimiter;
+   import demo.feign.FeignService;
+   import org.springframework.beans.factory.annotation.Autowired;
+   import org.springframework.http.HttpStatus;
+   import org.springframework.http.ResponseEntity;
+   import org.springframework.web.bind.annotation.GetMapping;
+   import org.springframework.web.bind.annotation.RestController;
+   
+   
+   @RestController
+   public class DemoController {
+   
+       private final RateLimiter rateLimiter = RateLimiter.create(50.0);
+   
+       @Autowired
+       private FeignService feignService;
+   
+       @GetMapping("/request")
+       public ResponseEntity<String> hello() {
+           if (rateLimiter.tryAcquire()) {
+               return ResponseEntity.ok(feignService.msg());
+           } else {
+               return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body("Too many requests");
+           }
+       }
+   }
+   ```
+
+
+
+- 启动eureka服务，注册成功
+
+![](https://files.lsmcloud.top/blogScreen Shot 2023-08-14 at 10.40.49 AM.png)
+
+
+
+- 访问admin-service/request，确认两个hello-service在轮流提供服务
+
+![](https://files.lsmcloud.top/blogScreen Shot 2023-08-14 at 10.42.17 AM.png)
+
+   ![](https://files.lsmcloud.top/blogScreen Shot 2023-08-14 at 10.42.51 AM.png)
+
+
+
+- 使用Jmeter进行限流测试
+
+![](https://files.lsmcloud.top/blogScreen Shot 2023-08-14 at 11.55.41 AM.png)
+
+   ![](https://files.lsmcloud.top/blogScreen Shot 2023-08-14 at 11.55.49 AM.png)
+
+   ![](https://files.lsmcloud.top/blogScreen Shot 2023-08-14 at 11.55.58 AM.png)
+
+   ![](https://files.lsmcloud.top/blogScreen Shot 2023-08-14 at 11.56.10 AM.png)
+
+   ![](https://files.lsmcloud.top/blogScreen Shot 2023-08-14 at 11.56.19 AM.png)
+
+
+
+-  结论
+
+可以发现在限流允许的范围内，admin-service使用round ribbin来交替请求hello01，与hello02，当请求数超过50次/s时，返回Too many requests，实现限流
+
+
+
+## 2. DevOps 要求
+
+### 2.1 Dockerfile用于构建镜像（5分）
+
+为该项目准备 Dockerfile，用于构建镜像
+
+
 
 * Dockerfile见项目根目录Dockerfile
 
-* ```dockerfile
+ ```dockerfile
   # Dockerfile
   FROM openjdk:17
   
@@ -80,15 +204,19 @@
   
   ENTRYPOINT ["java", "-jar", "demo-0.0.1-SNAPSHOT.jar"]
   
-  ```
+ ```
 
   
 
-2. 为该项目准备 Kubernetes 编排文件，用于在 Kubernetes 集群上创建 Deployment 和 Service
+### 2.2 Kubernetes编排文件（5分）
+
+为该项目准备 Kubernetes 编排文件，用于在 Kubernetes 集群上创建 Deployment 和 Service
+
+
 
 * k8s部署内容见项目中 ./jenkins/scripts/demo.yaml 文件
 
-* ```yaml
+ ```yaml
   # demo.yaml
   apiVersion: apps/v1
   kind: Deployment #对象类型
@@ -138,19 +266,27 @@
       port: 8080
       targetPort: 8080
   
-  ```
+ ```
 
   
 
-3. 编写 Jenkins 持续集成流水线，实现**代码构建**/**单元测试**/**镜像构建**功能（需要写至少一个单元测试）
+### 2.3 持续集成流水线（5分）
 
-4. 编写 Jenkins 持续部署流水线，实现部署到 Kubernetes 集群的功能，该流水线的触发条件为持续集成流水线执行成功
+### 2.4 持续部署流水线（5分）
 
-5. 注意：持续集成流水线和持续部署流水线也可以合二为一。
+2.3 编写 Jenkins 持续集成流水线，实现**代码构建**/**单元测试**/**镜像构建**功能（需要写至少一个单元测试）
 
-3/4/5：Jenkinsfile见项目中 ./jenkins/Jenkinsfile文件
+2.4 编写 Jenkins 持续部署流水线，实现部署到 Kubernetes 集群的功能，该流水线的触发条件为持续集成流水线执行成功
 
-* ```groovy
+
+
+**注意：持续集成流水线和持续部署流水线也可以合二为一。**
+
+**以下为2.3和2.4的需求实现**
+
+- Jenkinsfile见项目中 ./jenkins/Jenkinsfile文件
+
+ ```groovy
   pipeline {
       agent none
   
@@ -244,60 +380,135 @@
   }
   
   
-  ```
-  
+ ```
+
+
+
 * 具体过程：
 
-  * 1.将jenkins连接到k8s-nju13-namespace中，完成鉴权
+  1.将jenkins连接到k8s-nju13-namespace中，完成鉴权
 
-    * 具体过程仿照https://doc.weixin.qq.com/doc/w3_m_YeHOnMvfCxXW?scode=ABoAuwfGAAkIB91cNPAK4AcQYdAN0
+  * 具体过程仿照https://doc.weixin.qq.com/doc/w3_m_YeHOnMvfCxXW?scode=ABoAuwfGAAkIB91cNPAK4AcQYdAN0
 
-    * 图片处需要修改命令
+  * 图片处需要修改命令
 
-      ![image-20230730182453951](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230730182453951.png)
+    ![image-20230730182453951](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230730182453951.png)
 
-  * 2.部署流水线
-    
-    * Jenkins流程：
-    
-    * |          |         Stage          |         step         |
-      | :------: | :--------------------: | :------------------: |
-      | 持续集成 |    1.Git Clone Code    | 拉取spring boot代码  |
-      |          |     2.Maven Build      |    maven构建jar包    |
-      |          |     3.Image Build      |       构建镜像       |
-      |          | 4.Push Image To Harbor | push镜像至docker仓库 |
-      | 持续部署 |    5.Git Clone Yaml    | 拉取部署所需yaml文件 |
-      |          |   6.Change YAML File   |   改变Yaml环境变量   |
-      |          |  7.Deploy the Web App  | 部署spring boot应用  |
-      |          |  8.Deploy the Monitor  |  部署Prometheus监控  |
-      | 集成测试 |         9.Test         |         测试         |
-    
-    * 部署成功截图
-    
-    * ![image-20230730224910852](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230730224910852.png)
-    
-  * 3.访问端口验证k8s部署是否成功
   
-    * 集群网址172.29.4.18，Nodeport配置为30333，故访问172.29.4.18:30333/ping，验证成功
-    * ![image-20230731185135102](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230731185135102.png)
+  
+  2.部署流水线
+  
+  * Jenkins流程：
+  
+  |          |         Stage          |         step         |
+  | :------: | :--------------------: | :------------------: |
+  | 持续集成 |    1.Git Clone Code    | 拉取spring boot代码  |
+  |          |     2.Maven Build      |    maven构建jar包    |
+  |          |     3.Image Build      |       构建镜像       |
+  |          | 4.Push Image To Harbor | push镜像至docker仓库 |
+  | 持续部署 |    5.Git Clone Yaml    | 拉取部署所需yaml文件 |
+  |          |   6.Change YAML File   |   改变Yaml环境变量   |
+  |          |  7.Deploy the Web App  | 部署spring boot应用  |
+  |          |  8.Deploy the Monitor  |  部署Prometheus监控  |
+  | 集成测试 |         9.Test         |         测试         |
+  
+  * 部署成功截图
+  
+  ![image-20230730224910852](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230730224910852.png)
+  
+  
+  
+  3.访问端口验证k8s部署是否成功
+  
+  * 集群网址172.29.4.18，Nodeport配置为30333，故访问172.29.4.18:30333/ping，验证成功
+  
+  * ![image-20230731185135102](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230731185135102.png)
+  
+  4. 流水线单元测试
+  
+  * 添加针对demoController的单元测试
+    
+   ```java
+    package nju13.demo;
+    
+    import jakarta.annotation.Resource;
+    import nju13.demo.controller.DemoController;
+    import org.junit.Assert;
+    import org.junit.Test;
+    import org.junit.runner.RunWith;
+    import org.springframework.boot.test.context.SpringBootTest;
+    import org.springframework.test.context.junit4.SpringRunner;
+    
+    @SpringBootTest
+    @RunWith(SpringRunner.class)
+    public class PingServiceTest
+    {
+        @Resource
+        private DemoController demoController;
+    
+        @Test
+        public void tryPing(){
+            Assert.assertEquals("{\"msg\":\"Hello, this is NJU13\"}",demoController.hello().getBody());
+        }
+    }
+    
+   ```
+  
+  
+  
+  * 在jenkins file中添加junit测试步骤
+   ```groovy
+    stage('Unit Tests') { //第三步：单元测试
+                steps {
+                    sh 'mvn test'
+                    junit '**/target/surefire-reports/*.xml'
+                }
+            }
+   ```
+  
+  
+  
+  * 可以在blue ocean中得到maven test的输出，确定test通过
+   ![](https://files.lsmcloud.top/blogScreen Shot 2023-08-14 at 4.56.09 PM.png)
+  
 
-6. 代码提交到仓库自动触发流水线（bonus 5分）
 
-* 使用github webhook / jenkins触发器（待做）
 
-## **3. 扩容场景**
+### 2.5 代码提交到仓库自动触发流水线（bonus 5分）
 
-1.为该 Java 项目提供 Prometheus metrics 接口，可以供 Prometheus 采集监控指标
+加分项：代码提交到仓库自动触发流水线
+
+* 尝试使用gitee webhook
+
+  经过测试，学校的jenkins服务没有公网ip或域名，因此当代码更新时无法通过webhook发送请求到jenkins，因此难以实现触发式更新
+
+  
+
+* 经过权衡，最后使用轮询式更新，在configuration中输入H/5 * * * *，让代码仓库每五分钟轮询gitee是否有更新
+
+  ![](https://files.lsmcloud.top/blogScreen Shot 2023-08-14 at 12.04.26 PM.png)
+
+  轮询到代码仓库更新后，jenkins开始重新构建项目
+
+
+
+## 3. 扩容场景
+
+### 3.1 Prometheus采集监控指标（5分）
+
+为该 Java 项目提供 Prometheus metrics 接口，可以供 Prometheus 采集监控指标
 
 * 在springboot项目中配置Prometheus metrics 接口
 
   * ![image-20230801112225930](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801112225930.png)
 
+  
+
 * 部署k8s-monitor对象
 
   * yaml代码位于./jenkins/script/demo-monitor.yaml
 
-  * ```yaml
+   ```yaml
     apiVersion: monitoring.coreos.com/v1
     kind: ServiceMonitor
     metadata:
@@ -317,58 +528,90 @@
       namespaceSelector:
         matchNames:
         - nju13
-    ```
+   ```
 
   * 放入流水线中部署
 
-  * ![image-20230801112409002](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801112409002.png)
+   ![image-20230801112409002](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801112409002.png)
 
 * 在Prometheus的UI界面验证部署是否成功
 
-  * ![image-20230801112050506](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801112050506.png)
+  ![image-20230801112050506](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801112050506.png)
 
-2.在 Grafana 中的定制应用的监控大屏（CPU/内存/JVM）
+
+
+### 3.2 Grafana定制应用监控大屏（5分）
+
+在 Grafana 中的定制应用的监控大屏（CPU/内存/JVM）
 
 * 网站系统的安全隐患：Grafana中默认的管理员账户admin密码admin没改，随随便便就能进去操作
 * 在Grafana 中的定制监控应用lar-demo的各种性能
   * 容器CPU使用情况
   * 容器内存使用情况
   * 网络请求情况
-  * ![image-20230801150417996](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801150417996.png)
+   ![image-20230801150417996](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801150417996.png)
 
-3.使用压测工具（例如 Jmeter）对接口进压测，在 Grafana 中观察监控数据
+
+
+### 3.3 压测并观察监控数据（5分）
+
+使用压测工具（例如 Jmeter）对接口进压测，在 Grafana 中观察监控数据
 
 * 使用Jmeter，向172.29.4.18:30332/ping  用100个进程同时发送 100个GET请求
-* 配置和结果如下
-  * ![image-20230801150552940](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801150552940.png)
-  * ![image-20230801150604028](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801150604028.png)
-  * ![image-20230801150640926](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801150640926.png)
+
+   配置和结果如下
+   ![image-20230801150552940](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801150552940.png)
+   ![image-20230801150604028](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801150604028.png)
+   ![image-20230801150640926](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801150640926.png)
+
     * 部分请求错误，证明限流成功
+
+   
+
 * Grafana 监控应用lar-demo结果如下，明显可看出变化
+  
   * CPU使用情况
-    * ![image-20230801150824336](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801150824336.png)
+     ![image-20230801150824336](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801150824336.png)
+    
     * 从25升至50
+    
+    
+    
   * Memory使用情况
-    * ![image-20230801150928604](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801150928604.png)
+     ![image-20230801150928604](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801150928604.png)
+    
     * 从2.7G升至3G
+    
+    
+    
   * 网络使用情况
-    * ![image-20230801151009171](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801151009171.png)
+    ![image-20230801151009171](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801151009171.png)
 
-4.通过 Kubernetes 命令进行手工扩容，并再次观察 Grafana 中的监控数据
 
-* 命令行扩容发现权限不足，故只能更改yaml文件重新构建流水线
-  * ![image-20230801152235388](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801152235388.png)
-  * ![image-20230801152328292](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801152328292.png)
+
+- 通过 Kubernetes 命令进行手工扩容，并再次观察 Grafana 中的监控数据
+
+  命令行扩容发现权限不足，故只能更改yaml文件重新构建流水线
+
+  ![image-20230801152235388](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801152235388.png)
+
+  ![image-20230801152328292](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801152328292.png)
+
 * 扩容后观察Grafana可见，Cpu和Memory的监控面板新增两个Container的曲线
-  * ![image-20230801152753480](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801152753480.png)
+  
+  ![image-20230801152753480](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230801152753480.png)
 
-5.加分项：使用 Kubernetes HPA 模块根据 CPU 负载做服务的 Auto Scale（bonus 5 分）
+
+
+### 3.5 Auto Scale(bonus 10分)
+
+加分项：使用 Kubernetes HPA 模块根据 CPU 负载做服务的 Auto Scale
 
 - 创建HPA并查看
 
 - 创建demo-hpa.yaml如下配置hpa自动扩容的参数
 
-  - ```yaml
+   ```yaml
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -413,7 +656,7 @@
         app: lar-demo-hpa
       type: ClusterIP
     
-    ```
+   ```
 
     
 
@@ -442,7 +685,12 @@
   - ![image-20230815230456357](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230815230456357.png)
 
 
-# **分数完成度**
+
+
+
+# 分数完成度
+
+**完成所有需求及加分项**
 
 
 
