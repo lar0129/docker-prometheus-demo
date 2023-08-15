@@ -2,21 +2,21 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: lar-demo
-  name: lar-demo
+    app: lar-demo-hpa
+  name: lar-demo-hpa
   namespace: nju13
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: lar-demo
+      app: lar-demo-hpa
   template:
     metadata:
       labels:
-        app: lar-demo
+        app: lar-demo-hpa
     spec:
       containers:
-        - name: lar-demo
+        - name: lar-demo-hpa
           image: harbor.edu.cn/nju13/lar-demo:70
           ports:
             - containerPort: 8080
@@ -32,12 +32,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: lar-demo
+  name: lar-demo-hpa
   namespace: nju13
 spec:
   ports:
     - port: 8080
       protocol: TCP
   selector:
-    app: lar-demo
+    app: lar-demo-hpa
   type: ClusterIP
