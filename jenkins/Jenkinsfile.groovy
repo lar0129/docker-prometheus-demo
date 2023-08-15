@@ -72,7 +72,7 @@ node('slave') {
 
         stage('HPA') {
             echo "10. Test HPA"
-            sh 'kubectl apply -f ./jenkins/scripts/demo-hpa.yaml'
+            sh 'kubectl apply -f ./jenkins/scripts/demo-hpa.yaml -n nju13'
 //            sh 'kubectl autoscale deployment demo-hpa -n nju13 --cpu-percent=50 --min=1 --max=10'
             sh 'kubectl get hpa -n nju13'
         }
