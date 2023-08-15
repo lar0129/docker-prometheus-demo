@@ -17,8 +17,10 @@ spec:
     spec:
       containers:
         - name: demo-hpa
-          image: harbor.edu.cn/nju13/demo-hpa:85
+          image: harbor.edu.cn/nju13/demo-hpa:{VERSION}
           imagePullPolicy: IfNotPresent
+          imagePullSecrets: # 本地测试时注销
+            - name: docker-harbor-nju13 # 本地测试时注销
           ports:
             - containerPort: 8080
           resources: #基于内存自动扩容
