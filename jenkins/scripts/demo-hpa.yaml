@@ -9,15 +9,15 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: demo-hpa
+      app: lar-demo
   template:
     metadata:
       labels:
-        app: demo-hpa
+        app: lar-demo
     spec:
       containers:
         - name: demo-hpa
-          image: harbor.edu.cn/nju13/lar-demo:63
+          image: harbor.edu.cn/nju13/lar-demo:65
           imagePullPolicy: IfNotPresent
 
           ports:
