@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: lar-demo
-          image: harbor.edu.cn/nju13/lar-demo:65
+          image: harbor.edu.cn/nju13/lar-demo:{VERSION}
           imagePullPolicy: IfNotPresent
 
           ports:
