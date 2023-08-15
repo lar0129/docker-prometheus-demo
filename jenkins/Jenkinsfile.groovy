@@ -71,9 +71,8 @@ node('slave') {
         }
 
         stage('HPA') {
-            echo "10. Deploy To K8s Stage"
+            echo "10. Test HPA"
             sh 'kubectl apply -f ./jenkins/scripts/demo-hpa.yaml'
-            // sh 'kubectl apply -f ./jenkins/scripts/demo-monitor.yaml'
         }
 
         stage('Deploy') {

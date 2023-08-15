@@ -8,8 +8,8 @@ metadata:
 spec:
   replicas: 1
   selector:
-  matchLabels:
-    app: demo-hpa
+    matchLabels:
+      app: demo-hpa
   template:
     metadata:
       labels:
