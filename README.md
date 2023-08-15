@@ -359,7 +359,31 @@
 
 5.加分项：使用 Kubernetes HPA 模块根据 CPU 负载做服务的 Auto Scale（bonus 5 分）
 
-* 没学
+- 创建HPA并查看
+
+- 创建demo-hpa.yaml如下配置hpa自动扩容的参数
+
+  ![image-20230815175155205](C:\Users\17228\AppData\Roaming\Typora\typora-user-images\image-20230815175155205.png)
+
+- 流水线中执行yaml文件创建deploy
+
+  ![image-20230815175242161](C:\Users\17228\AppData\Roaming\Typora\typora-user-images\image-20230815175242161.png)
+
+- 设置HPA：最小1个pod，最多10个pods，cpu负载超过50%扩容
+
+  ![image-20230815180949974](C:\Users\17228\AppData\Roaming\Typora\typora-user-images\image-20230815180949974.png)
+
+- 查看HPA
+
+  ![image-20230815181331298](C:\Users\17228\AppData\Roaming\Typora\typora-user-images\image-20230815181331298.png)
+
+  ![image-20230815181413809](C:\Users\17228\AppData\Roaming\Typora\typora-user-images\image-20230815181413809.png)
+
+  demo-hpa存在
+
+  ![image-20230815181442115](C:\Users\17228\AppData\Roaming\Typora\typora-user-images\image-20230815181442115.png)
+
+- 压测验证HPA
 
 # **分数说明**
 
