@@ -1,15 +1,20 @@
-211250127 梁安然
-
-
+[TOC]
 
 开发一个 Spring Boot 应用，并使用云原生功能
 
 * gitee项目地址：https://gitee.com/lar0129/prometheus-test-demo
-
 * github项目地址：https://github.com/lar0129/prometheus-test-demo
   * Jenkins拉取github仓库经常失败，故gitee为主项目，github为备份
 
 
+
+小组成员
+
+* 211250165 刘尧力
+* 211250127 梁安然
+* 211250135 赵简
+
+# 过程截图
 
 
 ## **1. 功能要求**
@@ -363,33 +368,85 @@
 
 - 创建demo-hpa.yaml如下配置hpa自动扩容的参数
 
-  ![image-20230815175155205](C:\Users\17228\AppData\Roaming\Typora\typora-user-images\image-20230815175155205.png)
+  - ```yaml
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: lar-demo-hpa
+      name: lar-demo-hpa
+      namespace: nju13
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: lar-demo-hpa
+      template:
+        metadata:
+          labels:
+            app: lar-demo-hpa
+        spec:
+          containers:
+            - name: lar-demo-hpa
+              image: harbor.edu.cn/nju13/lar-demo:70
+              ports:
+                - containerPort: 8080
+              resources: #基于内存自动扩容
+                limits:
+                  cpu: 200m
+                requests:
+                  cpu: 80m  
+          imagePullSecrets: # 本地测试时注销
+            - name: docker-harbor-nju13 # 本地测试时注销
+    
+    ---
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: lar-demo-hpa
+      namespace: nju13
+    spec:
+      ports:
+        - port: 8080
+          protocol: TCP
+      selector:
+        app: lar-demo-hpa
+      type: ClusterIP
+    
+    ```
+
+    
 
 - 流水线中执行yaml文件创建deploy
 
-  ![image-20230815175242161](C:\Users\17228\AppData\Roaming\Typora\typora-user-images\image-20230815175242161.png)
+  ![image-20230815224934507](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230815224934507.png)
 
 - 设置HPA：最小1个pod，最多10个pods，cpu负载超过50%扩容
 
-  ![image-20230815180949974](C:\Users\17228\AppData\Roaming\Typora\typora-user-images\image-20230815180949974.png)
+  ![image-20230815224952591](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230815224952591.png)
 
 - 查看HPA
 
-  ![image-20230815181331298](C:\Users\17228\AppData\Roaming\Typora\typora-user-images\image-20230815181331298.png)
+  ![image-20230815225026390](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230815225026390.png)
 
-  ![image-20230815181413809](C:\Users\17228\AppData\Roaming\Typora\typora-user-images\image-20230815181413809.png)
-
-  demo-hpa存在
-
-  ![image-20230815181442115](C:\Users\17228\AppData\Roaming\Typora\typora-user-images\image-20230815181442115.png)
+  demo-hpa成功监测。且目前replicas数量为1
 
 - 压测验证HPA
 
-# **分数说明**
+  - ![image-20230815230319182](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230815230319182.png)
+  - 146个请求后到达极限
 
-本次作业占总评 55 分，分数分配如下
+- 压力测试后，观测到HPA自动扩容成功
 
-**1.功能要求（****20** **分）**
+  - ![image-20230815230426622](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230815230426622.png)
+  - ![image-20230815230456357](https://lar-blog.oss-cn-nanjing.aliyuncs.com/picGo_img/AppData/Roaming/Typora/typora-user-images/image-20230815230456357.png)
+
+
+# **分数完成度**
+
+
+
+**1.功能要求（20分）**
 
 1.1 实现接口 （5 分）√
 
@@ -402,7 +459,7 @@
 
 
 
-**2. DevOps 要求（****20** **分）**
+**2. DevOps 要求（20分）**
 
 2.1 Dockerfile 用于构建镜像（5 分）√
 
@@ -416,7 +473,7 @@
 
 
 
-**3. 扩容场景（****15** **分）**
+**3. 扩容场景（15分）**
 
 3.1 Prometheus 采集监控指标（5 分）√
 
@@ -424,28 +481,5 @@
 
 3.3 压测并观察监控数据（5 分） √
 
-**3.5 Auto Scale（bonus 10 分）**
+**3.5 Auto Scale（bonus 10 分）**√
 
-# **提交要求**
-
-只需提交一份项目说明文档，必须包含以下内容：
-
-​            \1.     限流功能代码说明和截图
-
-​            \2.     Dockerfile，K8s 编排文件截图及说明
-
-​            \3.     Jenkins 持续集成、持续部署、持续测试配置截图及说明，以及后续验证流水线成功的截图
-
-​            \4.     监控指标采集的配置及说明；Grafana 监控大屏截图
-
-​            \5.     压测工具配置说明，及相应压测监控截图；K8s 手工扩容后，相应压测监控截图
-
-文档内容不限于以上所述，可以任意添加其余说明，使得文档更清晰
-
-一组由一人提交即可，文档内写明组员的信息，姓名和学号
-
-
-
-注意：因为只会根据文档评分，文档一定要完整准确清晰地体现所做的工作，请大家对自己负责！
-
-统一提交 pdf 文件，统一文件命名，组号.pdf，如所在组为 1 组，则文件名为：1.pdf

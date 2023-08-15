@@ -23,8 +23,8 @@ spec:
           resources: #基于内存自动扩容
             limits:
               cpu: 200m
-            requests: #新增cpu配置
-              cpu: 80m  #CPU大小, 1核cpu等于1000m--
+            requests:
+              cpu: 80m
       imagePullSecrets: # 本地测试时注销
         - name: docker-harbor-nju13 # 本地测试时注销
 
