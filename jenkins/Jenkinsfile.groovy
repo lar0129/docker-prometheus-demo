@@ -77,11 +77,11 @@ node('slave') {
             sh 'kubectl get hpa -n nju13'
         }
 
-        stage('Deploy') {
-        echo "7. Deploy To K8s Stage"
-        sh 'kubectl apply -f ./jenkins/scripts/demo.yaml -n nju13'
-        // sh 'kubectl apply -f ./jenkins/scripts/demo-monitor.yaml'
-        }
+//        stage('Deploy') {
+//        echo "7. Deploy To K8s Stage"
+//        sh 'kubectl apply -f ./jenkins/scripts/demo.yaml -n nju13'
+//        // sh 'kubectl apply -f ./jenkins/scripts/demo-monitor.yaml'
+//        }
 
         stage('Monitor') {
             echo "8. Deploy Prometheus Monitor"
