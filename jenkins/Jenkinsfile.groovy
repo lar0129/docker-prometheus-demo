@@ -69,7 +69,13 @@ node('slave') {
         // ./jenkins/scripts/是自己创建的？
         sh 'sed -i "s#{VERSION}#${BUILD_ID}#g" ./jenkins/scripts/demo.yaml'
         }
-    
+
+        stage('HPA') {
+            echo "10. Deploy To K8s Stage"
+            sh 'kubectl apply -f ./jenkins/scripts/demo-hpa.yaml'
+            // sh 'kubectl apply -f ./jenkins/scripts/demo-monitor.yaml'
+        }
+
         stage('Deploy') {
         echo "7. Deploy To K8s Stage"
         sh 'kubectl apply -f ./jenkins/scripts/demo.yaml -n nju13'

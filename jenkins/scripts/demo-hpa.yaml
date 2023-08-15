@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: demo-hpa
+  name: demo-hpa
+  namespace: nju13
+spec:
+  replicas: 1
+  selector:
+  matchLabels:
+    app: demo-hpa
+  template:
+    metadata:
+      labels:
+        app: demo-hpa
+    spec:
+       containers:
+         - name: demo-hpa
+           image: harbor.edu.cn/nju13/demo-hpa:85
+           imagePullPolicy: IfNotPresent
+           ports:
+             - containerPort: 8080
+           resources: #基于内存自动扩容
+             limits:
+                cpu: 200m
+             requests: #新增cpu配置
+                cpu: 80m  #CPU大小, 1核cpu等于1000m--
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-hpa
+  namespace: nju13
+spec:
+  ports:
+    - port: 8080
+  #     nodePort: 31007
+        protocol: TCP
+  selector:
+    app: demo-hpa
+  type: ClusterIP
